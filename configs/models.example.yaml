@@ -1,0 +1,32 @@
+# 模型与流水线配置示例（复制为 configs/local.yaml 后修改）
+#
+# 原则：每个环节都记录实际使用的引擎与版本，最终写入产物的 pipeline 字段。
+# 不在此处写死版本号以外的调参魔法值。
+
+layout:
+  engine: null          # 版面分析：如 docling / mineru / 自训检测模型
+  fallback: ocr-lines   # 版面分析不可用时，退化为按行聚合
+
+ocr:
+  engine: null          # 如 paddleocr / tesseract / rapidocr
+  lang: [zh, en]
+  min_confidence: 0.6   # 低于阈值交给 vlm 兜底
+
+vlm:
+  enabled: false
+  model: null           # 如 qwen2.5-vl / internvl / paddleocr-vl
+  revision: null
+  max_image_side: 1600
+
+tables:
+  strategy: vlm         # vlm | rules | off
+formulas:
+  enabled: true
+
+fields:
+  # 证件/票据定向抽取的模板名，对应源码中的 schema 定义
+  template: null
+
+output:
+  include_bbox: true
+  include_confidence: true

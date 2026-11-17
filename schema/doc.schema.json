@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/Ching-Chiang/diligram-ocr-vlm/main/schema/doc.schema.json",
+  "title": "DiLiGram Parsed Document",
+  "description": "Canonical interchange format between diligram-ocr-vlm (producer) and diligram-rag (consumer).",
+  "type": "object",
+  "required": ["schema_version", "doc_id", "source", "pages"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "0.1",
+      "description": "Contract version. Bump on any breaking change."
+    },
+    "doc_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "object",
+      "required": ["uri", "sha256"],
+      "additionalProperties": false,
+      "properties": {
+        "uri": { "type": "string" },
+        "mime_type": { "type": "string" },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "lang": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "title": { "type": "string" }
+      }
+    },
+    "pipeline": {
+      "type": "object",
+      "description": "Which engines produced this output. Free-form so model upgrades stay traceable.",
+      "additionalProperties": true,
+      "properties": {
+        "parser": { "type": "string" },
+        "model": { "type": "string" },
+        "model_revision": { "type": "string" },
+        "ocr_engine": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/page" }
+    },
+    "fields": {
+      "type": "array",
+      "description": "Document-level key/value extraction, e.g. ID-card or invoice fields.",
+      "items": { "$ref": "#/$defs/field" }
+    }
+  },
+  "$defs": {
+    "unit": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "bbox": {
+      "type": "array",
+      "description": "Normalized [x0, y0, x1, y1], origin at page top-left.",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": { "$ref": "#/$defs/unit" }
+    },
+    "page": {
+      "type": "object",
+      "required": ["page_no", "blocks"],
+      "additionalProperties": false,
+      "properties": {
+        "page_no": { "type": "integer", "minimum": 1 },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "blocks": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/block" }
+        }
+      }
+    },
+    "block": {
+      "type": "object",
+      "required": ["block_id", "type", "order"],
+      "additionalProperties": false,
+      "properties": {
+        "block_id": {
+          "type": "string",
+          "description": "Stable within a document; used by consumers to cite evidence."
+        },
+        "type": {
+          "enum": [
+            "title",
+            "text",
+            "list",
+            "table",
+            "formula",
+            "figure",
+            "seal",
+            "stamp",
+            "signature",
+            "barcode",
+            "header",
+            "footer"
+          ]
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Reading order within the page."
+        },
+        "bbox": { "$ref": "#/$defs/bbox" },
+        "text": { "type": "string" },
+        "latex": { "type": "string" },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "table": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["rows", "cols"],
+          "properties": {
+            "rows": { "type": "integer", "minimum": 1 },
+            "cols": { "type": "integer", "minimum": 1 },
+            "cells": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/cell" }
+            }
+          }
+        }
+      }
+    },
+    "cell": {
+      "type": "object",
+      "required": ["row", "col", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "row": { "type": "integer", "minimum": 0 },
+        "col": { "type": "integer", "minimum": 0 },
+        "row_span": { "type": "integer", "minimum": 1 },
+        "col_span": { "type": "integer", "minimum": 1 },
+        "text": { "type": "string" }
+      }
+    },
+    "field": {
+      "type": "object",
+      "required": ["key", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "key": { "type": "string" },
+        "value": { "type": "string" },
+        "confidence": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "bbox": { "$ref": "#/$defs/bbox" },
+        "page_no": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}

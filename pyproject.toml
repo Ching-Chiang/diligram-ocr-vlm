@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "diligram-ocr-vlm"
+version = "0.1.0"
+description = "OCR + VLM document and ID-card parsing into a traceable block/field representation."
+requires-python = ">=3.10"
+dependencies = [
+    "jsonschema>=4.20",
+]
+
+[project.optional-dependencies]
+# 重依赖单独隔开，避免只想跑 schema 校验时被迫装 CUDA 栈
+vlm = ["torch>=2.2", "transformers>=4.45", "pillow>=10.0"]
+ocr = ["paddleocr>=2.7"]
+dev = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
